@@ -1,0 +1,22 @@
+{
+  "name": "splitbrain/remarkable-api",
+  "description": "PHP Implementation of the ReMarkable file API",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Andreas Gohr",
+      "email": "andi@splitbrain.org"
+    }
+  ],
+  "require": {
+    "ramsey/uuid": "^3.7",
+    "guzzlehttp/guzzle": "^6.3",
+    "splitbrain/php-cli": "^1.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "splitbrain\\RemarkableAPI\\": "src"
+    }
+  }
+}
