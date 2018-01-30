@@ -2,7 +2,7 @@
 
 Work in Progress
 
-Goal of this project is to figure out and document the API which is used by the ReMarkable Paper Tablet for syncing documents between the device, the desktop and mobile clients and the cloud service. A sample client implementation in PHP is also part of the project.
+Goal of this project is to figure out and document the API which is used by the [reMarkable Paper Tablet](https://remarkable.com/) for syncing documents between the device, the desktop and mobile clients and the cloud service. A sample client implementation in PHP is also part of the project.
 
 ## API Docs
 
