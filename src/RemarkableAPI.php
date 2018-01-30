@@ -126,21 +126,7 @@ class RemarkableAPI
      */
     public function updateMetaData($item)
     {
-        $client = new Client([
-            'base_uri' => $this->STORAGE_API,
-            'headers' => [
-                'Authorization' => "Bearer $this->token"
-            ],
-        ]);
-
-        $response = $client->request('PUT', '/document-storage/json/2/upload/update-status', [
-            'json' => [$item]
-        ]);
-
-        $item = (json_decode((string)$response->getBody(), true))[0];
-        if (!$item['Success']) throw new \Exception($item['Message']);
-
-        return $item;
+        return $this->storageRequest('PUT', 'upload/update-status', $item);
     }
 
     /**
@@ -149,10 +135,10 @@ class RemarkableAPI
      * You probably want to use this to create folders only, for uploading use
      * the uploadDocument() method instead
      *
+     * @param string $name The visible name to use
      * @param string $type The type of the new item, use one of the TYPE_* constants
      * @param string $parentID The parent folder ID or empty
      * @return array the created (minimal) item information
-     * @throws \Exception
      */
     public function createItem($name, $type, $parentID = '')
     {
@@ -165,21 +151,7 @@ class RemarkableAPI
             'ModifiedClient' => (new \DateTime())->format('c')
         ];
 
-        $client = new Client([
-            'base_uri' => $this->STORAGE_API,
-            'headers' => [
-                'Authorization' => "Bearer $this->token"
-            ],
-        ]);
-
-        $response = $client->request('PUT', '/document-storage/json/2/upload/request', [
-            'json' => [$stub]
-        ]);
-
-        $item = (json_decode((string)$response->getBody(), true))[0];
-        if (!$item['Success']) throw new \Exception($item['Message']);
-
-        return $item;
+        return $this->storageRequest('PUT', 'upload/request', $stub);
     }
 
     /**
@@ -230,15 +202,29 @@ class RemarkableAPI
             'Version' => $version
         ];
 
+        return $this->storageRequest('PUT', 'delete', $stub);
+    }
+
+    /**
+     * Executes an authenticated request on the storage JSON API
+     *
+     * @param string $verb The wanted HTTP verb
+     * @param string $base The basic endpoint to talk to
+     * @param array $item The item data to send (will be JSON encoded)
+     * @return array The result of the request
+     * @throws \Exception
+     */
+    protected function storageRequest($verb, $base, $item)
+    {
         $client = new Client([
-            'base_uri' => $this->STORAGE_API,
+            'base_uri' => $this->STORAGE_API . '/document-storage/json/2/',
             'headers' => [
                 'Authorization' => "Bearer $this->token"
             ],
         ]);
 
-        $response = $client->request('PUT', '/document-storage/json/2/delete', [
-            'json' => [$stub]
+        $response = $client->request($verb, $base, [
+            'json' => [$item]
         ]);
 
         $item = (json_decode((string)$response->getBody(), true))[0];
