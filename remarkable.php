@@ -24,6 +24,9 @@ class Remarkable extends \splitbrain\phpcli\CLI
         $options->registerArgument('code', 'The code obtained from https://my.remarkable.com/generator-device', true, 'register');
 
         $options->registerCommand('list', 'List all the available files');
+
+        $options->registerCommand('upload', 'Upload the given file');
+        $options->registerArgument('file', 'The file to upload', true, 'upload');
     }
 
     /**
@@ -36,34 +39,16 @@ class Remarkable extends \splitbrain\phpcli\CLI
      */
     protected function main(\splitbrain\phpcli\Options $options)
     {
-        $api = new RemarkableAPI();
-
-
         $args = $options->getArgs();
         switch ($options->getCmd()) {
             case 'register':
-                $token = $api->register($args[0]);
-                $this->saveToken($token);
+                $this->cmdRegister($args[0]);
                 break;
             case 'list':
-                $api->init($this->loadToken());
-                $list = $api->listFiles();
-                $fs = new RemarkableFS($list);
-                $tree = $fs->getTree();
-                $tf = new \splitbrain\phpcli\TableFormatter($this->colors);
-
-                foreach ($tree as $path => $items) {
-                    foreach ($items as $item) {
-                        echo $tf->format(
-                            [3, 25, '*'],
-                            [
-                                $fs->typeToIcon($item['Type']),
-                                (new \DateTime($item['ModifiedClient']))->format('Y-m-d H:i:s'),
-                                $path
-                            ]
-                        );
-                    }
-                }
+                $this->cmdList();
+                break;
+            case 'upload';
+                $this->cmdUpload($args[0]);
                 break;
 
             default:
@@ -71,6 +56,57 @@ class Remarkable extends \splitbrain\phpcli\CLI
         }
     }
 
+    /**
+     * Register command
+     *
+     * @param string $code
+     */
+    protected function cmdRegister($code) {
+        $api = new RemarkableAPI();
+        $token = $api->register($code);
+        $this->saveToken($token);
+    }
+
+    /**
+     * List Command
+     */
+    protected function cmdList() {
+        $api = new RemarkableAPI();
+        $api->init($this->loadToken());
+
+        $list = $api->listFiles();
+        $fs = new RemarkableFS($list);
+        $tree = $fs->getTree();
+        $tf = new \splitbrain\phpcli\TableFormatter($this->colors);
+
+        foreach ($tree as $path => $items) {
+            foreach ($items as $item) {
+                echo $tf->format(
+                    [3, 25, '*', 40],
+                    [
+                        $fs->typeToIcon($item['Type']),
+                        (new \DateTime($item['ModifiedClient']))->format('Y-m-d H:i:s'),
+                        $path,
+                        $item['ID']
+                    ]
+                );
+            }
+        }
+    }
+
+    /**
+     * Upload Command
+     *
+     * @param string $file
+     */
+    protected function cmdUpload($file) {
+        $api = new RemarkableAPI();
+        $api->init($this->loadToken());
+        $stream = \GuzzleHttp\Psr7\stream_for($file);
+        $name = basename($file);
+
+        $item = $api->uploadDocument($stream, $name);
+    }
 
     /**
      * Save the auth token

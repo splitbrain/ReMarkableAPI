@@ -4,6 +4,7 @@ namespace splitbrain\RemarkableAPI;
 
 
 use GuzzleHttp\Client;
+use Psr\Http\Message\StreamInterface;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -15,6 +16,10 @@ use Ramsey\Uuid\Uuid;
  */
 class RemarkableAPI
 {
+
+    const TYPE_COLLECTION = 'CollectionType';
+    const TYPE_DOCUMENT = 'DocumentType';
+
     /** The endpoint where Authentication is handled */
     const AUTH_API = 'https://my.remarkable.com';
 
@@ -109,6 +114,106 @@ class RemarkableAPI
         return $data;
     }
 
+    /**
+     * Update a single item
+     *
+     * In theory this API supports updating multiple items at once, but it's easier to handle
+     * exceptions of a single item
+     *
+     * @param array $item
+     * @return array the updated item
+     * @throws \Exception
+     */
+    public function updateMetaData($item)
+    {
+        $client = new Client([
+            'base_uri' => $this->STORAGE_API,
+            'headers' => [
+                'Authorization' => "Bearer $this->token"
+            ],
+        ]);
+
+        $response = $client->request('PUT', '/document-storage/json/2/upload/update-status', [
+            'json' => [$item]
+        ]);
+
+        $item = (json_decode((string)$response->getBody(), true))[0];
+        if (!$item['Success']) throw new \Exception($item['Message']);
+
+        return $item;
+    }
+
+    /**
+     * Creates a new Item
+     *
+     * You probably want to use this to create folders only, for uploading use
+     * the uploadDocument() method instead
+     *
+     * @param string $type The type of the new item, use one of the TYPE_* constants
+     * @param string $parentID The parent folder ID or empty
+     * @return array the created (minimal) item information
+     * @throws \Exception
+     */
+    public function createItem($name, $type, $parentID = '')
+    {
+        $stub = [
+            'ID' => Uuid::uuid4()->toString(),
+            'Parent' => $parentID,
+            'Type' => $type,
+            'Version' => 1,
+            'VissibleName' => $name,
+            'ModifiedClient' => (new \DateTime())->format('c')
+        ];
+
+        $client = new Client([
+            'base_uri' => $this->STORAGE_API,
+            'headers' => [
+                'Authorization' => "Bearer $this->token"
+            ],
+        ]);
+
+        $response = $client->request('PUT', '/document-storage/json/2/upload/request', [
+            'json' => [$stub]
+        ]);
+
+        $item = (json_decode((string)$response->getBody(), true))[0];
+        if (!$item['Success']) throw new \Exception($item['Message']);
+
+        return $item;
+    }
+
+    /**
+     * Upload a new document
+     *
+     * @param string|resource|StreamInterface $body The file contents to upload
+     * @param $name
+     * @param string $parentID
+     * @return array the newly created (minimal) item information
+     * @throws \Exception
+     */
+    public function uploadDocument($body, $name, $parentID = '')
+    {
+        $item = $this->createItem($name, self::TYPE_DOCUMENT, $parentID);
+
+        if(!isset($item['BlobURLPut'])) {
+            print_r($item);
+            throw new \Exception('No put url');
+        }
+
+        $puturl = $item['BlobURLPut'];
+
+        $client = new Client([
+            'headers' => [
+                'Authorization' => "Bearer $this->token"
+            ],
+        ]);
+
+        $client->request('PUT', $puturl, [
+            'body' => $body
+        ]);
+
+        return $item;
+    }
 
     /**
      * Get the Storage meta API endpoint from the service discovery endpoint
@@ -135,7 +240,7 @@ class RemarkableAPI
         $data = json_decode((string)$response->getBody(), true);
         if (!$data || $data['Status'] != 'OK') throw new \Exception('Service Discovery failed');
 
-        $this->STORAGE_API = 'https://'.$data['Host'];
+        $this->STORAGE_API = 'https://' . $data['Host'];
     }
 
 }
