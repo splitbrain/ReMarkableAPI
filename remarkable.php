@@ -27,6 +27,9 @@ class Remarkable extends \splitbrain\phpcli\CLI
 
         $options->registerCommand('upload', 'Upload the given file');
         $options->registerArgument('file', 'The file to upload', true, 'upload');
+
+        $options->registerCommand('delete', 'Delete a file');
+        $options->registerArgument('id', 'The ID of the file to delete', true, 'delete');
     }
 
     /**
@@ -47,8 +50,11 @@ class Remarkable extends \splitbrain\phpcli\CLI
             case 'list':
                 $this->cmdList();
                 break;
-            case 'upload';
+            case 'upload':
                 $this->cmdUpload($args[0]);
+                break;
+            case 'delete':
+                $this->cmdDelete($args[0]);
                 break;
 
             default:
@@ -61,7 +67,8 @@ class Remarkable extends \splitbrain\phpcli\CLI
      *
      * @param string $code
      */
-    protected function cmdRegister($code) {
+    protected function cmdRegister($code)
+    {
         $api = new RemarkableAPI();
         $token = $api->register($code);
         $this->saveToken($token);
@@ -70,7 +77,8 @@ class Remarkable extends \splitbrain\phpcli\CLI
     /**
      * List Command
      */
-    protected function cmdList() {
+    protected function cmdList()
+    {
         $api = new RemarkableAPI();
         $api->init($this->loadToken());
 
@@ -82,12 +90,13 @@ class Remarkable extends \splitbrain\phpcli\CLI
         foreach ($tree as $path => $items) {
             foreach ($items as $item) {
                 echo $tf->format(
-                    [3, 25, '*', 40],
+                    [3, 25, '*', 40, 4],
                     [
                         $fs->typeToIcon($item['Type']),
                         (new \DateTime($item['ModifiedClient']))->format('Y-m-d H:i:s'),
                         $path,
-                        $item['ID']
+                        $item['ID'],
+                        $item['Version']
                     ]
                 );
             }
@@ -99,13 +108,26 @@ class Remarkable extends \splitbrain\phpcli\CLI
      *
      * @param string $file
      */
-    protected function cmdUpload($file) {
+    protected function cmdUpload($file)
+    {
         $api = new RemarkableAPI();
         $api->init($this->loadToken());
         $stream = \GuzzleHttp\Psr7\stream_for($file);
         $name = basename($file);
+        $api->uploadDocument($stream, $name);
+    }
 
-        $item = $api->uploadDocument($stream, $name);
+    /**
+     * Delete command
+     *
+     * @param string $id
+     */
+    protected function cmdDelete($id)
+    {
+        $api = new RemarkableAPI();
+        $api->init($this->loadToken());
+
+        $api->deleteItem($id); #FIXME we need to find the version first
     }
 
     /**

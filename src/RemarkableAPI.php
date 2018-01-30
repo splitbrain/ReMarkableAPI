@@ -195,7 +195,7 @@ class RemarkableAPI
     {
         $item = $this->createItem($name, self::TYPE_DOCUMENT, $parentID);
 
-        if(!isset($item['BlobURLPut'])) {
+        if (!isset($item['BlobURLPut'])) {
             print_r($item);
             throw new \Exception('No put url');
         }
@@ -211,6 +211,38 @@ class RemarkableAPI
         $client->request('PUT', $puturl, [
             'body' => $body
         ]);
+
+        return $item;
+    }
+
+    /**
+     * Delete an existing item
+     *
+     * @param string $id the item's ID
+     * @param int $version the version on the server
+     * @return mixed
+     * @throws \Exception
+     */
+    public function deleteItem($id, $version = 1)
+    {
+        $stub = [
+            'ID' => $id,
+            'Version' => $version
+        ];
+
+        $client = new Client([
+            'base_uri' => $this->STORAGE_API,
+            'headers' => [
+                'Authorization' => "Bearer $this->token"
+            ],
+        ]);
+
+        $response = $client->request('PUT', '/document-storage/json/2/delete', [
+            'json' => [$stub]
+        ]);
+
+        $item = (json_decode((string)$response->getBody(), true))[0];
+        if (!$item['Success']) throw new \Exception($item['Message']);
 
         return $item;
     }
