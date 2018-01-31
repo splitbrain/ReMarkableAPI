@@ -5,10 +5,13 @@ require_once __DIR__ . '/vendor/autoload.php';
 use splitbrain\RemarkableAPI\RemarkableAPI;
 use splitbrain\RemarkableAPI\RemarkableFS;
 
-class Remarkable extends \splitbrain\phpcli\CLI
+class Remarkable extends \splitbrain\phpcli\PSR3CLI
 {
 
     const TOKEN_FILE = __DIR__ . '/auth.token';
+
+    /** @var RemarkableAPI */
+    protected $api;
 
     /**
      * Register options and arguments on the given $options object
@@ -42,6 +45,11 @@ class Remarkable extends \splitbrain\phpcli\CLI
      */
     protected function main(\splitbrain\phpcli\Options $options)
     {
+        $this->api = new RemarkableAPI($this);
+        if (file_exists(self::TOKEN_FILE)) {
+            $this->api->init($this->loadToken());
+        }
+
         $args = $options->getArgs();
         switch ($options->getCmd()) {
             case 'register':
@@ -69,8 +77,7 @@ class Remarkable extends \splitbrain\phpcli\CLI
      */
     protected function cmdRegister($code)
     {
-        $api = new RemarkableAPI();
-        $token = $api->register($code);
+        $token = $this->api->register($code);
         $this->saveToken($token);
     }
 
@@ -79,10 +86,7 @@ class Remarkable extends \splitbrain\phpcli\CLI
      */
     protected function cmdList()
     {
-        $api = new RemarkableAPI();
-        $api->init($this->loadToken());
-
-        $list = $api->listFiles();
+        $list = $this->api->listItems();
         $fs = new RemarkableFS($list);
         $tree = $fs->getTree();
         $tf = new \splitbrain\phpcli\TableFormatter($this->colors);
@@ -110,11 +114,9 @@ class Remarkable extends \splitbrain\phpcli\CLI
      */
     protected function cmdUpload($file)
     {
-        $api = new RemarkableAPI();
-        $api->init($this->loadToken());
         $stream = \GuzzleHttp\Psr7\stream_for($file);
         $name = basename($file);
-        $api->uploadDocument($stream, $name);
+        $this->api->uploadDocument($stream, $name);
     }
 
     /**
@@ -124,10 +126,7 @@ class Remarkable extends \splitbrain\phpcli\CLI
      */
     protected function cmdDelete($id)
     {
-        $api = new RemarkableAPI();
-        $api->init($this->loadToken());
-
-        $api->deleteItem($id); #FIXME we need to find the version first
+        $this->api->deleteItem($id); #FIXME we need to find the version first
     }
 
     /**

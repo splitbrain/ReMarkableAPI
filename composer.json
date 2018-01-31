@@ -12,7 +12,8 @@
   "require": {
     "ramsey/uuid": "^3.7",
     "guzzlehttp/guzzle": "^6.3",
-    "splitbrain/php-cli": "^1.1"
+    "splitbrain/php-cli": "^1.1",
+    "psr/log": "^1.0"
   },
   "autoload": {
     "psr-4": {

@@ -3,8 +3,8 @@
 namespace splitbrain\RemarkableAPI;
 
 
-use GuzzleHttp\Client;
 use Psr\Http\Message\StreamInterface;
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -29,8 +29,18 @@ class RemarkableAPI
     /** The endpoint where the files metadata is handled (may be changed by discovery above) */
     protected $STORAGE_API = 'https://document-storage-production-dot-remarkable-production.appspot.com';
 
-    /** @var string the current auth token */
-    protected $token;
+    /** @var Client The HTTP client */
+    protected $client;
+
+    /**
+     * RemarkableAPI constructor.
+     *
+     * @param LoggerInterface|null $logger
+     */
+    public function __construct(LoggerInterface $logger = null)
+    {
+        $this->client = new Client($logger);
+    }
 
     /**
      * Exchange a website generated code against an auth token
@@ -51,20 +61,19 @@ class RemarkableAPI
             'deviceID' => $device
         ];
 
-        $client = new Client([
-            'base_uri' => self::AUTH_API,
-            'headers' => [
-                'Authorization' => 'Bearer'
-            ]
-        ]);
-        $response = $client->request('POST', '/token/device/new', ['json' => $data]);
-        $this->token = (string)$response->getBody();
+        $response = $this->client->requestJSON(
+            'POST',
+            self::AUTH_API . '/token/device/new',
+            $data
+        );
 
-        return $this->token;
+        $token = (string)$response->getBody();
+        $this->client->setBearerToken($token);
+        return $token;
     }
 
     /**
-     * Initialize the API with a previously aquired token
+     * Initialize the API with a previously acquired token
      *
      * @param $token
      */
@@ -83,15 +92,15 @@ class RemarkableAPI
      */
     public function refreshToken($token)
     {
-        $client = new Client([
-            'base_uri' => self::AUTH_API,
-            'headers' => [
-                'Authorization' => "Bearer $token"
-            ]
-        ]);
-        $response = $client->request('POST', '/token/user/new');
-        $this->token = (string)$response->getBody();
-        return $this->token;
+        $this->client->setBearerToken($token);
+        $response = $this->client->request(
+            'POST',
+            self::AUTH_API . '/token/user/new'
+        );
+
+        $token = (string)$response->getBody();
+        $this->client->setBearerToken($token);
+        return $token;
     }
 
     /**
@@ -99,18 +108,13 @@ class RemarkableAPI
      *
      * @return array
      */
-    public function listFiles()
+    public function listItems()
     {
-        $client = new Client([
-            'base_uri' => $this->STORAGE_API,
-            'headers' => [
-                'Authorization' => "Bearer $this->token"
-            ],
-        ]);
-
-        $response = $client->request('GET', '/document-storage/json/2/docs');
+        $response = $this->client->request(
+            'GET',
+            $this->STORAGE_API . '/document-storage/json/2/docs'
+        );
         $data = json_decode((string)$response->getBody(), true);
-
         return $data;
     }
 
@@ -174,13 +178,7 @@ class RemarkableAPI
 
         $puturl = $item['BlobURLPut'];
 
-        $client = new Client([
-            'headers' => [
-                'Authorization' => "Bearer $this->token"
-            ],
-        ]);
-
-        $client->request('PUT', $puturl, [
+        $this->client->request('PUT', $puturl, [
             'body' => $body
         ]);
 
@@ -216,16 +214,9 @@ class RemarkableAPI
      */
     protected function storageRequest($verb, $base, $item)
     {
-        $client = new Client([
-            'base_uri' => $this->STORAGE_API . '/document-storage/json/2/',
-            'headers' => [
-                'Authorization' => "Bearer $this->token"
-            ],
-        ]);
 
-        $response = $client->request($verb, $base, [
-            'json' => [$item]
-        ]);
+
+        $response = $this->client->request($verb, $base, [$item]);
 
         $item = (json_decode((string)$response->getBody(), true))[0];
         if (!$item['Success']) throw new \Exception($item['Message']);
@@ -240,20 +231,18 @@ class RemarkableAPI
      */
     protected function discoverStorage()
     {
-        $client = new Client([
-            'base_uri' => self::SERVICE_DISCOVERY_API,
-            'headers' => [
-                'Authorization' => "Bearer $this->token"
-            ],
-        ]);
 
-        $response = $client->request('GET', '/service/json/1/document-storage', [
-            'query' => [
-                'environment' => 'production',
-                'group' => 'auth0|5a68dc51cb30df3877a1d7c4', # FIXME what is this?
-                'apiVer' => 2,
+        $response = $this->client->request(
+            'GET',
+            self::SERVICE_DISCOVERY_API . '/service/json/1/document-storage',
+            [
+                'query' => [
+                    'environment' => 'production',
+                    'group' => 'auth0|5a68dc51cb30df3877a1d7c4', # FIXME what is this?
+                    'apiVer' => 2,
+                ]
             ]
-        ]);
+        );
 
         $data = json_decode((string)$response->getBody(), true);
         if (!$data || $data['Status'] != 'OK') throw new \Exception('Service Discovery failed');
