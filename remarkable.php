@@ -33,6 +33,9 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
 
         $options->registerCommand('delete', 'Delete a file');
         $options->registerArgument('id', 'The ID of the file to delete', true, 'delete');
+
+        $options->registerCommand('mkdir', 'Create a new folder hierarchy');
+        $options->registerArgument('folder', 'The folders using Unix notation (slashes as path separators)', true, 'mkdir');
     }
 
     /**
@@ -64,6 +67,9 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
             case 'delete':
                 $this->cmdDelete($args[0]);
                 break;
+            case 'mkdir':
+                $this->cmdMkDir($args[0]);
+                break;
 
             default:
                 $options->help();
@@ -86,8 +92,7 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
      */
     protected function cmdList()
     {
-        $list = $this->api->listItems();
-        $fs = new RemarkableFS($list);
+        $fs = new RemarkableFS($this->api);
         $tree = $fs->getTree();
         $tf = new \splitbrain\phpcli\TableFormatter($this->colors);
 
@@ -127,6 +132,17 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
     protected function cmdDelete($id)
     {
         $this->api->deleteItem($id); #FIXME we need to find the version first
+    }
+
+    /**
+     * Mkdir command
+     *
+     * @param string $dir
+     */
+    protected function cmdMkDir($dir)
+    {
+        $fs = new RemarkableFS($this->api);
+        $fs->mkdirP($dir);
     }
 
     /**

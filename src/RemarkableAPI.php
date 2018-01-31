@@ -134,10 +134,30 @@ class RemarkableAPI
     }
 
     /**
+     * Creates a new Folder
+     *
+     * @param string $name The visible name to use
+     * @param string $parentID The parent folder ID or empty
+     * @return array the created (minimal) item information
+     */
+    public function createFolder($name, $parentID = '')
+    {
+        $item = [
+            'ID' => Uuid::uuid4()->toString(),
+            'Parent' => $parentID,
+            'Type' => self::TYPE_COLLECTION,
+            'Version' => 1,
+            'VissibleName' => $name,
+            'ModifiedClient' => (new \DateTime())->format('c')
+        ];
+
+        return $this->updateMetaData($item);
+    }
+
+    /**
      * Creates a new Item
      *
-     * You probably want to use this to create folders only, for uploading use
-     * the uploadDocument() method instead
+     * You probably want to use uploadDocument() instead.
      *
      * @param string $name The visible name to use
      * @param string $type The type of the new item, use one of the TYPE_* constants
@@ -214,9 +234,7 @@ class RemarkableAPI
      */
     protected function storageRequest($verb, $base, $item)
     {
-
-
-        $response = $this->client->request($verb, $base, [$item]);
+        $response = $this->client->requestJSON($verb, $this->STORAGE_API . '/document-storage/json/2/' . $base, [$item]);
 
         $item = (json_decode((string)$response->getBody(), true))[0];
         if (!$item['Success']) throw new \Exception($item['Message']);
