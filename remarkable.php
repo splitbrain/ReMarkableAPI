@@ -13,6 +13,9 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
     /** @var RemarkableAPI */
     protected $api;
 
+    /** @var string default loglevel */
+    protected $logdefault = 'error';
+
     /**
      * Register options and arguments on the given $options object
      *
@@ -131,7 +134,7 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
      */
     protected function cmdDelete($id)
     {
-        $this->api->deleteItem($id); #FIXME we need to find the version first
+        $this->api->deleteItem($id);
     }
 
     /**

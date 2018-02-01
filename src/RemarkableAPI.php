@@ -5,6 +5,7 @@ namespace splitbrain\RemarkableAPI;
 
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -32,6 +33,9 @@ class RemarkableAPI
     /** @var Client The HTTP client */
     protected $client;
 
+    /** @var LoggerInterface */
+    protected $logger;
+
     /**
      * RemarkableAPI constructor.
      *
@@ -39,13 +43,18 @@ class RemarkableAPI
      */
     public function __construct(LoggerInterface $logger = null)
     {
-        $this->client = new Client($logger);
+        if ($logger === null) {
+            $this->logger = new NullLogger();
+        } else {
+            $this->logger = $logger;
+        }
+        $this->client = new Client($this->logger);
     }
 
     /**
      * Exchange a website generated code against an auth token
      *
-     * @link https://my.remarkable.com/generator-device
+     * @link https://my.remarkable.com/generator-desktop
      *
      * @param string $code the auth code as displayed by the my.remarkable.com
      * @return string the bearer authentication token
@@ -61,6 +70,7 @@ class RemarkableAPI
             'deviceID' => $device
         ];
 
+        $this->logger->info('Registering device');
         $response = $this->client->requestJSON(
             'POST',
             self::AUTH_API . '/token/device/new',
@@ -93,6 +103,7 @@ class RemarkableAPI
     public function refreshToken($token)
     {
         $this->client->setBearerToken($token);
+        $this->logger->info('Refreshing auth token');
         $response = $this->client->request(
             'POST',
             self::AUTH_API . '/token/user/new'
@@ -110,12 +121,39 @@ class RemarkableAPI
      */
     public function listItems()
     {
+        $this->logger->info('Listing all items');
         $response = $this->client->request(
             'GET',
             $this->STORAGE_API . '/document-storage/json/2/docs'
         );
         $data = json_decode((string)$response->getBody(), true);
         return $data;
+    }
+
+    /**
+     * Get a single item identified by the given ID
+     *
+     * @param string $id the document ID
+     * @param bool $download should the download URL be included in the response?
+     * @return array
+     * @throws \Exception
+     */
+    public function getItem($id, $download = false)
+    {
+        $query = ['doc' => $id];
+        if ($download) $query['withBlob'] = 'true';
+
+        $this->logger->info('Listing item');
+        $response = $this->client->request(
+            'GET',
+            $this->STORAGE_API . '/document-storage/json/2/docs',
+            ['query' => $query]
+        );
+
+        $item = (json_decode((string)$response->getBody(), true))[0];
+        if (!$item['Success']) throw new \Exception($item['Message']);
+
+        return $item;
     }
 
     /**
@@ -130,6 +168,7 @@ class RemarkableAPI
      */
     public function updateMetaData($item)
     {
+        $this->logger->info('Updating item metadata');
         return $this->storageRequest('PUT', 'upload/update-status', $item);
     }
 
@@ -151,6 +190,7 @@ class RemarkableAPI
             'ModifiedClient' => (new \DateTime())->format('c')
         ];
 
+        $this->logger->info('Creating folder');
         return $this->updateMetaData($item);
     }
 
@@ -175,6 +215,7 @@ class RemarkableAPI
             'ModifiedClient' => (new \DateTime())->format('c')
         ];
 
+        $this->logger->info('Creating item');
         return $this->storageRequest('PUT', 'upload/request', $stub);
     }
 
@@ -198,6 +239,7 @@ class RemarkableAPI
 
         $puturl = $item['BlobURLPut'];
 
+        $this->logger->info('Uploading data');
         $this->client->request('PUT', $puturl, [
             'body' => $body
         ]);
@@ -209,18 +251,14 @@ class RemarkableAPI
      * Delete an existing item
      *
      * @param string $id the item's ID
-     * @param int $version the version on the server
      * @return mixed
      * @throws \Exception
      */
-    public function deleteItem($id, $version = 1)
+    public function deleteItem($id)
     {
-        $stub = [
-            'ID' => $id,
-            'Version' => $version
-        ];
-
-        return $this->storageRequest('PUT', 'delete', $stub);
+        $item = $this->getItem($id);
+        $this->logger->info('Deleting item');
+        return $this->storageRequest('PUT', 'delete', $item);
     }
 
     /**
@@ -249,7 +287,7 @@ class RemarkableAPI
      */
     protected function discoverStorage()
     {
-
+        $this->logger->info('Discovering storage host');
         $response = $this->client->request(
             'GET',
             self::SERVICE_DISCOVERY_API . '/service/json/1/document-storage',

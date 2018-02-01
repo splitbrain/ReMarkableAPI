@@ -3,7 +3,6 @@
 namespace splitbrain\RemarkableAPI;
 
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 
 class Client
 {
@@ -26,14 +25,9 @@ class Client
      *
      * @param LoggerInterface $logger
      */
-    public function __construct(LoggerInterface $logger = null)
+    public function __construct(LoggerInterface $logger)
     {
-        if ($logger === null) {
-            $this->logger = new NullLogger();
-        } else {
-            $this->logger = $logger;
-        }
-
+        $this->logger = $logger;
         $this->client = new \GuzzleHttp\Client();
     }
 

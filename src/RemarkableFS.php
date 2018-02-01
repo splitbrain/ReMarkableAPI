@@ -106,12 +106,12 @@ class RemarkableFS
      */
     protected function mkdir($folder, $parent = '')
     {
+        // create
         $item = $this->api->createFolder($folder, $parent);
+        // fetch full info about newly created item
+        $item = $this->api->getItem($item['ID']);
 
-        # FIXME would be better to actually request this single item
-        $item['Parent'] = $parent;
-        $item['VissibleName'] = $folder;
-
+        // update the index
         $this->index[$item['ID']] = $item;
         $this->calcPath($item['ID']);
         return $item['ID'];
