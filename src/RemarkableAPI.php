@@ -248,6 +248,22 @@ class RemarkableAPI
     }
 
     /**
+     * Download a document
+     *
+     * @param string $id
+     * @return \Psr\Http\Message\ResponseInterface
+     */
+    public function downloadDocument($id)
+    {
+        $item = $this->getItem($id, true);
+        $geturl = $item['BlobURLGet'];
+
+        $this->logger->info('Downloading data');
+        $response = $this->client->request('GET', $geturl);
+        return $response;
+    }
+
+    /**
      * Delete an existing item
      *
      * @param string $id the item's ID

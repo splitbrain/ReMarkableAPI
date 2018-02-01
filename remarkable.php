@@ -31,14 +31,17 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
 
         $options->registerCommand('list', 'List all the available files');
 
-        $options->registerCommand('upload', 'Upload the given file');
-        $options->registerArgument('file', 'The file to upload', true, 'upload');
-
         $options->registerCommand('delete', 'Delete a file');
         $options->registerArgument('id', 'The ID of the file to delete', true, 'delete');
 
         $options->registerCommand('mkdir', 'Create a new folder hierarchy');
         $options->registerArgument('folder', 'The folders using Unix notation (slashes as path separators)', true, 'mkdir');
+
+        $options->registerCommand('upload', 'Upload the given file');
+        $options->registerArgument('file', 'The file to upload', true, 'upload');
+
+        $options->registerCommand('download', 'Download the specified file');
+        $options->registerArgument('file', 'The file to download', true, 'download');
     }
 
     /**
@@ -66,6 +69,9 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
                 break;
             case 'upload':
                 $this->cmdUpload($args[0]);
+                break;
+            case 'download':
+                $this->cmdDownload($args[0]);
                 break;
             case 'delete':
                 $this->cmdDelete($args[0]);
@@ -125,6 +131,17 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
         $stream = \GuzzleHttp\Psr7\stream_for($file);
         $name = basename($file);
         $this->api->uploadDocument($stream, $name);
+    }
+
+    /**
+     * Download Command
+     *
+     * @param string $file
+     */
+    protected function cmdDownload($file)
+    {
+        $response = $this->api->downloadDocument($file);
+        file_put_contents("$file.zip", (string)$response->getBody());
     }
 
     /**
