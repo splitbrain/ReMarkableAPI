@@ -85,7 +85,7 @@ class RemarkableFS
         $current = '';
         $parent = '';
         foreach ($parts as $part) {
-            $current = '/' . $part;
+            $current .= '/' . $part;
             $item = $this->findFirst($current, RemarkableAPI::TYPE_COLLECTION);
             if ($item === null) {
                 $parent = $this->mkdir($part, $parent);
@@ -138,7 +138,7 @@ class RemarkableFS
      *
      * @fixme figure out all the types
      * @param string $type
-     * @return $string;
+     * @return string;
      */
     public function typeToIcon($type)
     {
