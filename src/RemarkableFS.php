@@ -6,7 +6,7 @@ namespace splitbrain\RemarkableAPI;
  * Class RemarkableFS
  *
  * Implements helpers to simulate a file system structure on top of the flat hierarchy of
- * the ReMarkable. It maintains a state of what is available in the cloud in an index. That
+ * the reMarkable. It maintains a state of what is available in the cloud in an index. That
  * index needs to be refreshed when needed.
  *
  * @package splitbrain\RemarkableAPI
@@ -124,7 +124,7 @@ class RemarkableFS
      * @param string $type
      * @return null|array
      */
-    protected function findFirst($path, $type)
+    public function findFirst($path, $type)
     {
         if (!isset($this->tree[$path])) return null;
         foreach ($this->tree[$path] as $item) {

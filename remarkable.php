@@ -32,16 +32,21 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
         $options->registerCommand('list', 'List all the available files');
 
         $options->registerCommand('delete', 'Delete a file');
-        $options->registerArgument('id', 'The ID of the file to delete', true, 'delete');
+        $options->registerArgument('id', 'The UUID of the file to delete', true, 'delete');
 
         $options->registerCommand('mkdir', 'Create a new folder hierarchy');
         $options->registerArgument('folder', 'The folders using Unix notation (slashes as path separators)', true, 'mkdir');
 
-        $options->registerCommand('upload', 'Upload the given file');
+        $options->registerCommand('upload', 'Upload the given <file> to the <parent> folder');
         $options->registerArgument('file', 'The file to upload', true, 'upload');
+        $options->registerArgument('parent', 'The folder where the file should be uploaded. Empty for root.', false, 'upload');
+        $options->registerOption('uuid', 'The given <parent> is a UUID, not a path', 'u', false, 'upload');
 
-        $options->registerCommand('download', 'Download the specified file');
-        $options->registerArgument('file', 'The file to download', true, 'download');
+        $options->registerCommand('download', 'Download the specified document. The download is a zip file containing all files making up that document.');
+        $options->registerArgument('file', 'The document to download', true, 'download');
+        $options->registerArgument('to', 'The full path to where the <file> should be saved. Defaults to "./{id}.zip" with {id} being the file\'s UUID.', 'download');
+        $options->registerOption('uuid', 'The given <file^> is a UUID, not a path', 'u', false, 'download');
+
     }
 
     /**
@@ -68,10 +73,18 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
                 $this->cmdList();
                 break;
             case 'upload':
-                $this->cmdUpload($args[0]);
+                $this->cmdUpload(
+                    $args[0],
+                    isset($args[1]) ? $args[1] : '',
+                    $options->getOpt('uuid')
+                );
                 break;
             case 'download':
-                $this->cmdDownload($args[0]);
+                $this->cmdDownload(
+                    $args[0],
+                    isset($args[1]) ? $args[1] : '',
+                    $options->getOpt('uuid')
+                );
                 break;
             case 'delete':
                 $this->cmdDelete($args[0]);
@@ -124,24 +137,43 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
     /**
      * Upload Command
      *
-     * @param string $file
+     * @param string $file what to upload
+     * @param string $parent where to upload to
+     * @param bool $uuid is the parent a UUID?
      */
-    protected function cmdUpload($file)
+    protected function cmdUpload($file, $parent, $uuid)
     {
+        if (!$uuid) {
+            $fs = new RemarkableFS($this->api);
+            $parent = $fs->mkdirP($parent);
+        }
+
         $stream = \GuzzleHttp\Psr7\stream_for($file);
         $name = basename($file);
-        $this->api->uploadDocument($stream, $name);
+        $this->api->uploadDocument($stream, $name, $parent);
     }
 
     /**
      * Download Command
      *
-     * @param string $file
+     * @param string $file document to download
+     * @param string $to where to save to
+     * @param bool $uuid is $file a UUID?
      */
-    protected function cmdDownload($file)
+    protected function cmdDownload($file, $to, $uuid)
     {
+        if (!$uuid) {
+            $fs = new RemarkableFS($this->api);
+            $item = $fs->findFirst($file, RemarkableAPI::TYPE_DOCUMENT);
+            $file = $item['ID'];
+        }
+
+        if (!$to) {
+            $to = "$file.zip";
+        }
+
         $response = $this->api->downloadDocument($file);
-        file_put_contents("$file.zip", (string)$response->getBody());
+        file_put_contents($to, (string)$response->getBody());
     }
 
     /**
