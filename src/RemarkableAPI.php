@@ -195,28 +195,15 @@ class RemarkableAPI
     }
 
     /**
-     * Creates a new Item
+     * Creates a new Document Item ready to be uploaded
      *
-     * You probably want to use uploadDocument() instead.
-     *
-     * @param string $name The visible name to use
-     * @param string $type The type of the new item, use one of the TYPE_* constants
-     * @param string $parentID The parent folder ID or empty
-     * @return array the created (minimal) item information
+     * @param array $item the item to create
+     * @return array info about the new item
      */
-    public function createItem($name, $type, $parentID = '')
+    protected function createUploadRequest($item)
     {
-        $stub = [
-            'ID' => Uuid::uuid4()->toString(),
-            'Parent' => $parentID,
-            'Type' => $type,
-            'Version' => 1,
-            'VissibleName' => $name,
-            'ModifiedClient' => (new \DateTime())->format('c')
-        ];
-
-        $this->logger->info('Creating item');
-        return $this->storageRequest('PUT', 'upload/request', $stub);
+        $this->logger->info('Creating upload item');
+        return $this->storageRequest('PUT', 'upload/request', $item);
     }
 
     /**
@@ -230,7 +217,15 @@ class RemarkableAPI
      */
     public function uploadDocument($body, $name, $parentID = '')
     {
-        $item = $this->createItem($name, self::TYPE_DOCUMENT, $parentID);
+        $stub = [
+            'ID' => Uuid::uuid4()->toString(),
+            'Parent' => $parentID,
+            'VissibleName' => $name,
+            'ModifiedClient' => (new \DateTime())->format('c'),
+            'Type' => self::TYPE_DOCUMENT,
+            'Version' => 1
+        ];
+        $item = $this->createUploadRequest($stub);
 
         if (!isset($item['BlobURLPut'])) {
             print_r($item);
@@ -243,6 +238,8 @@ class RemarkableAPI
         $this->client->request('PUT', $puturl, [
             'body' => $body
         ]);
+
+        $item = $this->updateMetaData($stub);
 
         return $item;
     }
