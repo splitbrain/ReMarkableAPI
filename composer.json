@@ -1,6 +1,6 @@
 {
   "name": "splitbrain/remarkable-api",
-  "description": "PHP Implementation of the ReMarkable file API",
+  "description": "PHP Implementation of the reMarkable file API",
   "type": "library",
   "license": "MIT",
   "authors": [
@@ -12,8 +12,10 @@
   "require": {
     "ramsey/uuid": "^3.7",
     "guzzlehttp/guzzle": "^6.3",
-    "splitbrain/php-cli": "^1.1",
     "psr/log": "^1.0"
+  },
+  "require-dev": {
+    "splitbrain/php-cli": "^1.1"
   },
   "autoload": {
     "psr-4": {

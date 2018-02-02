@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "02ddcb2ce239c42797d034d87e5eb8ba",
+    "content-hash": "fabfa1055fa6c251f070044f2ac6edaf",
     "packages": [
         {
             "name": "guzzlehttp/guzzle",
@@ -411,19 +411,21 @@
                 "uuid"
             ],
             "time": "2018-01-20T00:28:24+00:00"
-        },
+        }
+    ],
+    "packages-dev": [
         {
             "name": "splitbrain/php-cli",
-            "version": "1.1.1",
+            "version": "1.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/splitbrain/php-cli.git",
-                "reference": "4795af10ff1c3b1ac614ef380d7d810af495e6f1"
+                "reference": "1d6f0bf9eccbfd79d1f4d185ef27573601185c23"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/splitbrain/php-cli/zipball/4795af10ff1c3b1ac614ef380d7d810af495e6f1",
-                "reference": "4795af10ff1c3b1ac614ef380d7d810af495e6f1",
+                "url": "https://api.github.com/repos/splitbrain/php-cli/zipball/1d6f0bf9eccbfd79d1f4d185ef27573601185c23",
+                "reference": "1d6f0bf9eccbfd79d1f4d185ef27573601185c23",
                 "shasum": ""
             },
             "require": {
@@ -461,10 +463,9 @@
                 "optparse",
                 "terminal"
             ],
-            "time": "2017-10-27T16:18:07+00:00"
+            "time": "2018-02-02T08:46:12+00:00"
         }
     ],
-    "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": [],
