@@ -44,8 +44,8 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
 
         $options->registerCommand('download', 'Download the specified document. The download is a zip file containing all files making up that document.');
         $options->registerArgument('file', 'The document to download', true, 'download');
-        $options->registerArgument('to', 'The full path to where the <file> should be saved. Defaults to "./{id}.zip" with {id} being the file\'s UUID.', 'download');
-        $options->registerOption('uuid', 'The given <file^> is a UUID, not a path', 'u', false, 'download');
+        $options->registerArgument('to', 'The full path to where the <file> should be saved. Defaults to "./{id}.zip" with {id} being the file\'s UUID.', false, 'download');
+        $options->registerOption('uuid', 'The given <file> is a UUID, not a path', 'u', false, 'download');
 
     }
 
