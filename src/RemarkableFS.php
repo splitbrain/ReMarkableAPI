@@ -75,11 +75,12 @@ class RemarkableFS
      * Missing folders are created if necessary
      *
      * @param string $folder A folder hierarchy in unix notation
-     * @return string the ID
+     * @return string the ID, empty for the top level
      */
     public function mkdirP($folder)
     {
         $folder = trim($folder, '/');
+        if($folder === '') return '';
         $parts = explode('/', $folder);
 
         $current = '';
