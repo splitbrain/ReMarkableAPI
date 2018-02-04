@@ -159,12 +159,14 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
      * @param string $file document to download
      * @param string $to where to save to
      * @param bool $uuid is $file a UUID?
+     * @throws Exception
      */
     protected function cmdDownload($file, $to, $uuid)
     {
         if (!$uuid) {
             $fs = new RemarkableFS($this->api);
             $item = $fs->findFirst($file, RemarkableAPI::TYPE_DOCUMENT);
+            if($item === null) throw new \Exception('Document not found');
             $file = $item['ID'];
         }
 
