@@ -7,6 +7,7 @@ use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Ramsey\Uuid\Uuid;
+use splitbrain\PHPArchive\Zip;
 
 /**
  * Class RemarkableAPI
@@ -226,6 +227,23 @@ class RemarkableAPI
             'Version' => 1
         ];
         $item = $this->createUploadRequest($stub);
+
+        # FIXME once this works it needs refactoring
+        $zip = new Zip();
+        $zip->create();
+        $zip->addData($stub['ID'] . '.pdf', (string)$body);
+        $zip->addData($stub['ID'] . '.pagedata', '');
+        $zip->addData($stub['ID'] . '.content', json_encode([
+            'extraMeatadata' => [],
+            'fileType' => 'pdf',
+            'lastOpenedPage' => 0,
+            'lineHeight' => -1,
+            'margins' => 100,
+#            'pageCount' => 1, #FIXME how to find out
+            'textScale' => 1,
+            'transform' => [] #FIXME wtf is this?
+        ], JSON_PRETTY_PRINT));
+        $body = $zip->getArchive();
 
         if (!isset($item['BlobURLPut'])) {
             print_r($item);

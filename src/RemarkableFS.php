@@ -80,7 +80,7 @@ class RemarkableFS
     public function mkdirP($folder)
     {
         $folder = trim($folder, '/');
-        if($folder === '') return '';
+        if ($folder === '') return '';
         $parts = explode('/', $folder);
 
         $current = '';

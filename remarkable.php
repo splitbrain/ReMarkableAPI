@@ -148,9 +148,8 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
             $parent = $fs->mkdirP($parent);
         }
 
-        $stream = \GuzzleHttp\Psr7\stream_for($file);
         $name = basename($file);
-        $this->api->uploadDocument($stream, $name, $parent);
+        $this->api->uploadDocument(file_get_contents($file), $name, $parent);
     }
 
     /**
@@ -166,7 +165,7 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
         if (!$uuid) {
             $fs = new RemarkableFS($this->api);
             $item = $fs->findFirst($file, RemarkableAPI::TYPE_DOCUMENT);
-            if($item === null) throw new \Exception('Document not found');
+            if ($item === null) throw new \Exception('Document not found');
             $file = $item['ID'];
         }
 
