@@ -148,8 +148,8 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
             $parent = $fs->mkdirP($parent);
         }
 
-        $name = basename($file);
-        $this->api->uploadDocument(file_get_contents($file), $name, $parent);
+        $name = basename($file, '.pdf');
+        $this->api->uploadPDF(file_get_contents($file), $name, $parent);
     }
 
     /**

@@ -3,7 +3,6 @@
 namespace splitbrain\RemarkableAPI;
 
 
-use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Ramsey\Uuid\Uuid;
@@ -198,27 +197,37 @@ class RemarkableAPI
     /**
      * Creates a new Document Item ready to be uploaded
      *
-     * @param array $item the item to create
-     * @return array info about the new item
+     * @param string $id the new document ID
+     * @return string the upload URL
+     * @throws \Exception
      */
-    protected function createUploadRequest($item)
+    protected function createUploadRequest($id)
     {
-        $this->logger->info('Creating upload item');
-        return $this->storageRequest('PUT', 'upload/request', $item);
+        $this->logger->info('Creating upload request');
+        $stub = [
+            'ID' => $id,
+            'Type' => self::TYPE_DOCUMENT,
+            'Version' => 1
+        ];
+        $item = $this->storageRequest('PUT', 'upload/request', $stub);
+
+        if (!isset($item['BlobURLPut'])) {
+            throw new \Exception('No BlobURLPut in upload request response');
+        }
+
+        return $item['BlobURLPut'];
     }
 
     /**
-     * Upload a new document
+     * Upload a PDF File to the remarkable
      *
-     * @param string|resource|StreamInterface $body The file contents to upload
-     * @param $name
-     * @param string $parentID
-     * @return array the newly created (minimal) item information
-     * @throws \Exception
+     * @param string $pdfBody The PDF contents
+     * @param string $name Name to display
+     * @param string $parentID Folder where the PDF should be stored
      */
-    public function uploadDocument($body, $name, $parentID = '')
+    public function uploadPDF($pdfBody, $name, $parentID = '')
     {
-        $stub = [
+        $item = [
             'ID' => Uuid::uuid4()->toString(),
             'Parent' => $parentID,
             'VissibleName' => $name,
@@ -226,44 +235,53 @@ class RemarkableAPI
             'Type' => self::TYPE_DOCUMENT,
             'Version' => 1
         ];
-        $item = $this->createUploadRequest($stub);
 
-        # FIXME once this works it needs refactoring
         $zip = new Zip();
         $zip->create();
-        $zip->addData($stub['ID'] . '.pdf', (string)$body);
-        $zip->addData($stub['ID'] . '.pagedata', '');
-        $zip->addData($stub['ID'] . '.content', json_encode([
+        $zip->addData($item['ID'] . '.pdf', $pdfBody);
+        $zip->addData($item['ID'] . '.pagedata', '');
+        $zip->addData($item['ID'] . '.content', json_encode([
             'extraMeatadata' => [],
             'fileType' => 'pdf',
             'lastOpenedPage' => 0,
             'lineHeight' => -1,
             'margins' => 100,
-#            'pageCount' => 1, #FIXME how to find out
+            #'pageCount' => 1, # we don't know this, but it seems the reMarkable can count
             'textScale' => 1,
-            'transform' => [] #FIXME wtf is this?
+            'transform' => [] # no idea how to fill this, but it seems optional
         ], JSON_PRETTY_PRINT));
-        $body = $zip->getArchive();
+        $zipBody = $zip->getArchive();
 
-        if (!isset($item['BlobURLPut'])) {
-            print_r($item);
-            throw new \Exception('No put url');
-        }
+        $this->uploadDocument($item, $zipBody);
+    }
 
-        $puturl = $item['BlobURLPut'];
+    /**
+     * Upload a new document
+     *
+     * The document has to be an enriched zip file
+     *
+     * @param array $item The new item to be created
+     * @param string $zipBody The zip compressed data to upload
+     * @return array the newly created (minimal) item information
+     */
+    public function uploadDocument($item, $zipBody)
+    {
+        $puturl = $this->createUploadRequest($item['ID']);
 
         $this->logger->info('Uploading data');
         $this->client->request('PUT', $puturl, [
-            'body' => $body
+            'body' => $zipBody
         ]);
 
-        $item = $this->updateMetaData($stub);
+        $item = $this->updateMetaData($item);
 
         return $item;
     }
 
     /**
      * Download a document
+     *
+     * The document is an enriched zip file
      *
      * @param string $id
      * @return \Psr\Http\Message\ResponseInterface
