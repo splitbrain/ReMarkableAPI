@@ -73,7 +73,7 @@ class RemarkableAPI
         $this->logger->info('Registering device');
         $response = $this->client->requestJSON(
             'POST',
-            self::AUTH_API . '/token/device/new',
+            self::AUTH_API . '/token/json/2/device/new',
             $data
         );
 
@@ -106,7 +106,7 @@ class RemarkableAPI
         $this->logger->info('Refreshing auth token');
         $response = $this->client->request(
             'POST',
-            self::AUTH_API . '/token/user/new'
+            self::AUTH_API . '/token/json/2/user/new'
         );
 
         $token = (string)$response->getBody();
