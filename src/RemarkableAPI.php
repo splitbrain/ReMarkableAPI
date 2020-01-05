@@ -246,7 +246,7 @@ class RemarkableAPI
             'lastOpenedPage' => 0,
             'lineHeight' => -1,
             'margins' => 100,
-            #'pageCount' => 1, # we don't know this, but it seems the reMarkable can count
+            'pageCount' => 0, # we don't know this, but it seems the reMarkable can count
             'textScale' => 1,
             'transform' => [] # no idea how to fill this, but it seems optional
         ], JSON_PRETTY_PRINT));
