@@ -241,7 +241,7 @@ class RemarkableAPI
         $zip->addData($item['ID'] . '.pdf', $pdfBody);
         $zip->addData($item['ID'] . '.pagedata', '');
         $zip->addData($item['ID'] . '.content', json_encode([
-            'extraMeatadata' => [],
+            'extraMetadata' => [],
             'fileType' => 'pdf',
             'lastOpenedPage' => 0,
             'lineHeight' => -1,
