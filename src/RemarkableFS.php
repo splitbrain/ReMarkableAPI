@@ -162,7 +162,12 @@ class RemarkableFS
      */
     protected function calcPath($id)
     {
-        if (!isset($this->index[$id])) throw new \Exception("Unknown ID $id. Inconsitent meta data");
+    	if($id == "trash")
+    		return "";
+    	
+        if (!isset($this->index[$id])) 
+        	throw new \Exception("Unknown ID $id. Inconsitent meta data");
+        	
         $item =& $this->index[$id];
 
         // path already set?
