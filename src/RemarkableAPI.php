@@ -22,7 +22,7 @@ class RemarkableAPI
     const TYPE_DOCUMENT = 'DocumentType';
 
     /** The endpoint where Authentication is handled */
-    const AUTH_API = 'https://my.remarkable.com';
+    const AUTH_API = 'https://webapp-production-dot-remarkable-production.appspot.com';
 
     /** The endpoint that tells us where to find the storage API */
     const SERVICE_DISCOVERY_API = 'https://service-manager-production-dot-remarkable-production.appspot.com';
