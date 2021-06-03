@@ -47,7 +47,11 @@ class RemarkableFS
 
         // add path
         foreach ($this->index as $id => $item) {
-            $this->calcPath($id);
+            try {
+                $this->calcPath($id);
+            } catch (\Exception $e) {
+                unset($this->index[$id]);
+            }
         }
 
         // create a tree index (each path can have multiple items)
