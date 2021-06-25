@@ -27,7 +27,7 @@ class Remarkable extends \splitbrain\phpcli\PSR3CLI
         $options->setHelp('A simple command line client to speak to the ReMarkable file API.');
 
         $options->registerCommand('register', 'Register this CLI as a new device using a code');
-        $options->registerArgument('code', 'The code obtained from https://my.remarkable.com/generator-desktop', true, 'register');
+        $options->registerArgument('code', 'The code obtained from https://my.remarkable.com/device/connect/desktop', true, 'register');
 
         $options->registerCommand('list', 'List all the available files');
 

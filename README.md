@@ -24,7 +24,7 @@ The library consists of three classes:
 * `splitbrain\ReMarkableAPI\ReMarkableFS` - the reMarkable stores all info in a flat hierarchy with documents identified by UUIDs only. This class makes the items accessible by path names (using `/` as a directory separator)
 * `splitbrain\ReMarkableAPI\Client` - this is just a thin wrapper around the Guzzle HTTP client which adds logging and handles authentication
 
-After instantiating the `ReMarkableAPI` object, you need to call either `register()` or `init()` on it before you can issue any of the other calls. The first call will register your client through a [8 char code](https://my.remarkable.com/generator-desktop/) and return an API token. You need to save that token somewhere and pass it to `init()` for subsequent calls. Have a look at the command line client in `remarkable.php` to see how to use it all.
+After instantiating the `ReMarkableAPI` object, you need to call either `register()` or `init()` on it before you can issue any of the other calls. The first call will register your client through a [8 char code](https://my.remarkable.com/device/connect/desktop/) and return an API token. You need to save that token somewhere and pass it to `init()` for subsequent calls. Have a look at the command line client in `remarkable.php` to see how to use it all.
 
 ## Command Line Client
 
