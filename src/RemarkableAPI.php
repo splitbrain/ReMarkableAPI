@@ -54,7 +54,7 @@ class RemarkableAPI
     /**
      * Exchange a website generated code against an auth token
      *
-     * @link https://my.remarkable.com/generator-desktop
+     * @link https://my.remarkable.com/device/connect/desktop
      *
      * @param string $code the auth code as displayed by the my.remarkable.com
      * @return string the bearer authentication token
